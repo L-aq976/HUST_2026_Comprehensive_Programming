@@ -38,7 +38,7 @@ distclean: clean
 	-@if exist $(BIN_DIR) rmdir /S /Q $(BIN_DIR) >nul 2>&1
 # 运行程序
 run: $(TARGET)
-	./$(TARGET)
+	./$(TARGET) $(DATA_DIR)/network_data.csv
 
 # 显示帮助信息
 help:
