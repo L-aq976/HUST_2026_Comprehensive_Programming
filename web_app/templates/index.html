@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网络分析系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .card { margin: 10px 0; }
+        .result { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 10px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="text-center mb-4">网络通信分析系统</h1>
+        
+        <!-- 文件上传 -->
+        <div class="card">
+            <div class="card-header">数据上传</div>
+            <div class="card-body">
+                <form id="uploadForm">
+                    <input type="file" class="form-control" id="csvFile" accept=".csv" required>
+                    <button type="submit" class="btn btn-primary mt-2">上传并分析</button>
+                </form>
+                <div id="uploadStatus"></div>
+            </div>
+        </div>
+        
+        <!-- 分析功能 -->
+        <div id="analysisPanel" class="hidden">
+            <!-- IP范围分析 -->
+            <div class="card">
+                <div class="card-header">IP安全规则分析</div>
+                <div class="card-body">
+                    <form id="ipRangeForm">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" placeholder="源IP" name="ip1" required>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" placeholder="起始IP" name="ip2" required>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" placeholder="结束IP" name="ip3" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-warning mt-2">检查违规</button>
+                    </form>
+                    <div id="ipRangeResult" class="result"></div>
+                </div>
+            </div>
+            
+            <!-- 拓扑分析 -->
+            <div class="card">
+                <div class="card-header">网络拓扑分析</div>
+                <div class="card-body">
+                    <button id="analyzeTopology" class="btn btn-info">分析拓扑</button>
+                    <div id="topologyResult" class="result"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 文件上传
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('file', document.getElementById('csvFile').files[0]);
+            
+            const status = document.getElementById('uploadStatus');
+            status.innerHTML = '<div class="alert alert-info">上传中...</div>';
+            
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    status.innerHTML = '<div class="alert alert-success">上传成功</div>';
+                    document.getElementById('analysisPanel').classList.remove('hidden');
+                } else {
+                    status.innerHTML = `<div class="alert alert-danger">${result.error}</div>`;
+                }
+            } catch (error) {
+                status.innerHTML = '<div class="alert alert-danger">上传失败</div>';
+            }
+        });
+        
+        // IP范围分析
+        document.getElementById('ipRangeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = {
+                ip1: formData.get('ip1'),
+                ip2: formData.get('ip2'),
+                ip3: formData.get('ip3')
+            };
+            
+            const resultDiv = document.getElementById('ipRangeResult');
+            resultDiv.innerHTML = '<div class="alert alert-info">分析中...</div>';
+            
+            try {
+                const response = await fetch('/api/analyze/ip_range', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `<pre>${result.result}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="alert alert-danger">${result.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<div class="alert alert-danger">分析失败</div>';
+            }
+        });
+    </script>
+</body>
+</html>

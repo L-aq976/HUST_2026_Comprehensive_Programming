@@ -1,0 +1,62 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build C++ Project",
+			"type": "shell",
+			"command": "E:\\x86_64-8.1.0-release-posix-seh-rt_v6-rev0\\mingw64\\bin\\g++.exe",
+			"args": [
+				"-fdiagnostics-color=always",
+				"-g",
+				"-I${workspaceFolder}/include",
+				"${workspaceFolder}/src/main.cpp",
+				"${workspaceFolder}/src/handle_data.cpp",
+				"-o",
+				"${workspaceFolder}/bin/main.exe"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"detail": "编译整个C++项目"
+		},
+		{
+			"label": "Build C++ Project",
+			"type": "shell",
+			"command": "E:\\x86_64-8.1.0-release-posix-seh-rt_v6-rev0\\mingw64\\bin\\g++.exe",
+			"args": [
+				"-fdiagnostics-color=always",
+				"-g",
+				"-Ic:\\Users\\32862\\Desktop\\2026程序设计综合课程\\源代码/include",
+				"c:\\Users\\32862\\Desktop\\2026程序设计综合课程\\源代码/src/main.cpp",
+				"c:\\Users\\32862\\Desktop\\2026程序设计综合课程\\源代码/src/handle_data.cpp",
+				"c:\\Users\\32862\\Desktop\\2026程序设计综合课程\\源代码/src/path_finder.cpp",
+				"c:\\Users\\32862\\Desktop\\2026程序设计综合课程\\源代码/src/sort_filter.cpp",
+				"-o",
+				"c:\\Users\\32862\\Desktop\\2026程序设计综合课程\\源代码/bin/main.exe"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Build C++ Project",
+			"type": "shell",
+			"command": "E:\\x86_64-8.1.0-release-posix-seh-rt_v6-rev0\\mingw64\\bin\\g++.exe",
+			"args": [
+				"-std=c++17",
+				"-fdiagnostics-color=always",
+				"-g",
+				"-Ic:\\Users\\32862\\Desktop\\2026程序设计综合课程\\源代码/include",
+				"c:\\Users\\32862\\Desktop\\2026程序设计综合课程\\源代码/src/main.cpp",
+				"c:\\Users\\32862\\Desktop\\2026程序设计综合课程\\源代码/src/handle_data.cpp",
+				"c:\\Users\\32862\\Desktop\\2026程序设计综合课程\\源代码/src/path_finder.cpp",
+				"c:\\Users\\32862\\Desktop\\2026程序设计综合课程\\源代码/src/sort_filter.cpp",
+				"-o",
+				"c:\\Users\\32862\\Desktop\\2026程序设计综合课程\\源代码/bin/main.exe"
+			],
+			"group": "build"
+		}
+	]
+}
