@@ -347,12 +347,12 @@ void CSRGraph::printfStarStructures(const std::vector<int>& star_centers) {
         std::cout << "中心节点ID: " << center_id 
                   << ", IP: " << getSrcIP(center_id) 
                   << ", 邻居数量: " << getNeighborCount(center_id) << std::endl;
-        std::cout << "相连节点: ";
+        std::cout << "相连节点: "<< std::endl;
         for (int i = 0; i < getNeighborCount(center_id); i++) {
             int dst_id;
             EdgeInfo edge_info;
             getNeighborInfo(center_id, i, dst_id, edge_info);
-            std::cout << getDestIP(dst_id) << " ";
+            std::cout << getDestIP(dst_id) << " "<< std::endl;
         }
         std::cout << std::endl;
     }

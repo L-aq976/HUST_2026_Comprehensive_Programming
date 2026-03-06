@@ -166,9 +166,14 @@
                                                 <input type="text" class="form-control" placeholder="目标IP" name="dst_ip" required>
                                             </div>
                                             <div class="col-12">
-                                                <button type="submit" class="btn btn-outline-primary btn-sm">
-                                                    <i class="fas fa-directions"></i> 查找路径
-                                                </button>
+                                                <div class="btn-group" role="group">
+                                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="analyzeShortestPath('congestion')">
+                                                        <i class="fas fa-tachometer-alt"></i> 拥塞程度
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-info btn-sm" onclick="analyzeShortestPath('hops')">
+                                                        <i class="fas fa-shoe-prints"></i> 跳数
+                                                    </button>
+                                                </div>
                                             </div>
                                         </form>
                                         <div id="pathResult" class="result-area"></div>
@@ -270,26 +275,30 @@
         });
         
         // 最短路径分析
-        document.getElementById('pathForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const data = {
-                src_ip: formData.get('src_ip'),
-                dst_ip: formData.get('dst_ip')
-            };
+        function analyzeShortestPath(method) {
+            const src_ip = document.querySelector('input[name="src_ip"]').value;
+            const dst_ip = document.querySelector('input[name="dst_ip"]').value;
+            
+            if (!src_ip || !dst_ip) {
+                alert('请输入源IP和目标IP');
+                return;
+            }
             
             const resultDiv = document.getElementById('pathResult');
             resultDiv.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> 分析中...</div>';
             
-            fetch('/api/analyze/shortest_path', {
+            const endpoint = method === 'hops' ? '/api/analyze/shortest_path_by_hops' : '/api/analyze/shortest_path';
+            const methodName = method === 'hops' ? '跳数' : '拥塞程度';
+            
+            fetch(endpoint, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
+                body: JSON.stringify({src_ip, dst_ip})
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    resultDiv.innerHTML = `<pre>${data.result}</pre>`;
+                    resultDiv.innerHTML = `<div class="alert alert-success">基于${methodName}的最短路径：</div><pre>${data.result}</pre>`;
                 } else {
                     resultDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ${data.error}</div>`;
                 }
@@ -297,7 +306,7 @@
             .catch(error => {
                 resultDiv.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> 分析失败</div>';
             });
-        });
+        }
         
         // 统计分析功能
         function analyzeTrafficStatistics() {

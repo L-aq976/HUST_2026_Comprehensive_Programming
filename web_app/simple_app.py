@@ -4,7 +4,6 @@ import subprocess
 import threading
 import queue
 import time
-import json
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -98,10 +97,12 @@ class SimpleCppInterface:
             completion_markers = {
                 "ANALYZE_IP_RANGE": "ANALYSIS_COMPLETE",
                 "FIND_SHORTEST_PATH": "PATH_FINDING_COMPLETE", 
+                "FIND_SHORTEST_PATH_BY_HOPS": "PATH_FINDING_BY_HOPS_COMPLETE",
                 "FIND_STAR_STRUCTURES": "STAR_ANALYSIS_COMPLETE",
                 "TRAFFIC_STATISTICS": "TRAFFIC_STATS_COMPLETE",
                 "HTTPS_STATISTICS": "HTTPS_STATS_COMPLETE",
-                "UNIDIRECTIONAL_TRAFFIC": "UNIDIRECTIONAL_STATS_COMPLETE"
+                "UNIDIRECTIONAL_TRAFFIC": "UNIDIRECTIONAL_STATS_COMPLETE",
+                "GRAPH_INFO": "GRAPH_INFO_COMPLETE"
             }
             
             marker = completion_markers.get(command.split()[0], "COMPLETE")
@@ -193,7 +194,7 @@ def analyze_ip_range():
 
 @app.route('/api/analyze/shortest_path', methods=['POST'])
 def analyze_shortest_path():
-    """最短路径分析"""
+    """最短路径分析（拥塞程度）"""
     data = request.json
     src_ip = data.get('src_ip', '').strip()
     dst_ip = data.get('dst_ip', '').strip()
@@ -202,6 +203,24 @@ def analyze_shortest_path():
         return jsonify({'error': '源IP和目标IP不能为空'}), 400
     
     command = f"FIND_SHORTEST_PATH {src_ip} {dst_ip}"
+    success, result = cpp_interface.send_command(command)
+    
+    if success:
+        return jsonify({'success': True, 'result': result})
+    else:
+        return jsonify({'error': result}), 500
+
+@app.route('/api/analyze/shortest_path_by_hops', methods=['POST'])
+def analyze_shortest_path_by_hops():
+    """最短路径分析（跳数）"""
+    data = request.json
+    src_ip = data.get('src_ip', '').strip()
+    dst_ip = data.get('dst_ip', '').strip()
+    
+    if not all([src_ip, dst_ip]):
+        return jsonify({'error': '源IP和目标IP不能为空'}), 400
+    
+    command = f"FIND_SHORTEST_PATH_BY_HOPS {src_ip} {dst_ip}"
     success, result = cpp_interface.send_command(command)
     
     if success:

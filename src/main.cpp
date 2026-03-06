@@ -1,8 +1,12 @@
 #include "../include/handle_data.h"
 #include "../include/path_finder.h"
 #include "../include/safe.h"
+#include "../include/sort_filter.h"
 #include <iostream>
 #include <string>
+#include <sstream>
+#include <vector>
+#include <algorithm>
 
 /**
  * @brief 支持命令行交互的网络分析程序
@@ -32,6 +36,7 @@ int main(int argc, char* argv[]) {
     // 创建分析对象
     PathFinder pathFinder(graph);
     Safe safe(graph);
+    SortFilter sortFilter;
 
     std::cout << "图加载完成! 顶点数: " << graph.getNumVertices() 
               << ", 边数: " << graph.getNumEdges() << std::endl;
@@ -71,10 +76,10 @@ int main(int argc, char* argv[]) {
             }
         }
         else if (cmd == "FIND_SHORTEST_PATH") {
-            // 最短路径查找
+            // 最短路径查找（拥塞程度）
             std::string src_ip, dst_ip;
             if (iss >> src_ip >> dst_ip) {
-                std::cout << "查找最短路径: " << src_ip << " -> " << dst_ip << std::endl;
+                std::cout << "查找基于拥塞程度的最短路径: " << src_ip << " -> " << dst_ip << std::endl;
                 
                 std::vector<int> path = pathFinder.findShortestPath(src_ip, dst_ip);
                 if (!path.empty()) {
@@ -95,6 +100,31 @@ int main(int argc, char* argv[]) {
                 std::cout << "正确格式: FIND_SHORTEST_PATH <源IP> <目标IP>" << std::endl;
             }
         }
+        else if (cmd == "FIND_SHORTEST_PATH_BY_HOPS") {
+            // 最短路径查找（跳数）
+            std::string src_ip, dst_ip;
+            if (iss >> src_ip >> dst_ip) {
+                std::cout << "查找基于跳数的最短路径: " << src_ip << " -> " << dst_ip << std::endl;
+                
+                std::vector<int> path = pathFinder.findShortestPathByHops(src_ip, dst_ip);
+                if (!path.empty()) {
+                    std::cout << "路径: ";
+                    for (size_t i = 0; i < path.size(); i++) {
+                        std::cout << graph.getSrcIP(path[i]);
+                        if (i != path.size() - 1) {
+                            std::cout << " -> ";
+                        }
+                    }
+                    std::cout << std::endl;
+                } else {
+                    std::cout << "未找到路径" << std::endl;
+                }
+                std::cout << "PATH_FINDING_BY_HOPS_COMPLETE" << std::endl;
+            } else {
+                std::cout << "错误: 命令格式不正确" << std::endl;
+                std::cout << "正确格式: FIND_SHORTEST_PATH_BY_HOPS <源IP> <目标IP>" << std::endl;
+            }
+        }
         else if (cmd == "FIND_STAR_STRUCTURES") {
             // 查找星型结构
             std::cout << "查找星型结构..." << std::endl;
@@ -105,13 +135,70 @@ int main(int argc, char* argv[]) {
         else if (cmd == "GRAPH_INFO") {
             // 显示图信息
             graph.printGraphInfo();
+            std::cout << "GRAPH_INFO_COMPLETE" << std::endl;
+        }
+        else if (cmd == "TRAFFIC_STATISTICS") {
+            // 流量统计分析
+            std::cout << "开始流量统计分析..." << std::endl;
+            
+            // 计算总流量
+            long long total_data = 0;
+            int total_flows = 0;
+            for (const auto& edge : graph.getEdgeInfos()) {
+                total_data += edge.total_data_size;
+                total_flows += edge.flow_count;
+            }
+            
+            std::cout << "总数据量: " << total_data << " bytes" << std::endl;
+            std::cout << "总流数: " << total_flows << std::endl;
+            std::cout << "平均每流数据量: " << (total_flows > 0 ? total_data / total_flows : 0) << " bytes" << std::endl;
+            
+            std::cout << "TRAFFIC_STATS_COMPLETE" << std::endl;
+        }
+        else if (cmd == "HTTPS_STATISTICS") {
+            // HTTPS统计分析
+            std::cout << "开始HTTPS统计分析..." << std::endl;
+            
+            // 调用SortFilter类的HTTPS统计功能
+            auto https_stats = sortFilter.findHTTPSsrc(graph);
+            if (!https_stats.empty()) {
+                std::cout << "HTTPS连接统计:" << std::endl;
+                for (const auto& stat : https_stats) {
+                    std::cout << "IP: " << stat.second << ", 总流量: " << stat.first << " bytes" << std::endl;
+                }
+            } else {
+                std::cout << "未发现HTTPS连接" << std::endl;
+            }
+            
+            std::cout << "HTTPS_STATS_COMPLETE" << std::endl;
+        }
+        else if (cmd == "UNIDIRECTIONAL_TRAFFIC") {
+            // 单向流量统计分析
+            std::cout << "开始单向流量统计分析..." << std::endl;
+            
+            // 调用SortFilter类的单向流量统计功能
+            auto unidirectional_stats = sortFilter.findbadsrc(graph);
+            if (!unidirectional_stats.empty()) {
+                std::cout << "单向流量异常节点:" << std::endl;
+                for (const auto& stat : unidirectional_stats) {
+                    std::cout << "IP: " << stat.second << ", 总流量: " << stat.first << " bytes" << std::endl;
+                }
+            } else {
+                std::cout << "未发现单向流量异常" << std::endl;
+            }
+            
+            std::cout << "UNIDIRECTIONAL_STATS_COMPLETE" << std::endl;
         }
         else if (cmd == "HELP") {
             // 帮助信息
             std::cout << "=== 可用命令 ===" << std::endl;
             std::cout << "ANALYZE_IP_RANGE <源IP> <起始IP> <结束IP> - 分析IP范围违规" << std::endl;
-            std::cout << "FIND_SHORTEST_PATH <源IP> <目标IP> - 查找最短路径" << std::endl;
+            std::cout << "FIND_SHORTEST_PATH <源IP> <目标IP> - 基于拥塞程度的最短路径" << std::endl;
+            std::cout << "FIND_SHORTEST_PATH_BY_HOPS <源IP> <目标IP> - 基于跳数的最短路径" << std::endl;
             std::cout << "FIND_STAR_STRUCTURES - 查找星型结构" << std::endl;
+            std::cout << "TRAFFIC_STATISTICS - 流量统计分析" << std::endl;
+            std::cout << "HTTPS_STATISTICS - HTTPS统计分析" << std::endl;
+            std::cout << "UNIDIRECTIONAL_TRAFFIC - 单向流量统计分析" << std::endl;
             std::cout << "GRAPH_INFO - 显示图信息" << std::endl;
             std::cout << "HELP - 显示帮助信息" << std::endl;
             std::cout << "EXIT - 退出程序" << std::endl;
