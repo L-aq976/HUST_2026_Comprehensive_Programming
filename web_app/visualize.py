@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-独立可视化脚本
+备用可视化脚本
+独立可视化
 可以直接运行: python visualize.py <json文件>
 """
 

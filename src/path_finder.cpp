@@ -7,8 +7,8 @@
 PathFinder::PathFinder(const CSRGraph& graph) : graph(graph) {}
 
 std::vector<int> PathFinder::findShortestPath(const std::string& src_ip, const std::string& dst_ip) {
-    int src_id = graph.getSrcVertexID(src_ip); // 获取源IP的索引
-    int dst_id = graph.getDestVertexID(dst_ip); // 获取目标IP的索引
+    int src_id = graph.getSrcVertexID(src_ip);
+    int dst_id = graph.getDestVertexID(dst_ip);
     std::vector<int> path;
 
     if (src_id == -1 || dst_id == -1) {
@@ -16,19 +16,21 @@ std::vector<int> PathFinder::findShortestPath(const std::string& src_ip, const s
         return path;
     }
 
-    // 使用Dijkstra算法，权重为拥塞程度（流量/持续时间）
     int num_vertices = graph.getNumVertices();
     std::vector<long long> dist(num_vertices, std::numeric_limits<long long>::max());
     std::vector<int> parent(num_vertices, -1);
     std::vector<bool> visited(num_vertices, false);
-    
-    // 使用优先队列（最小堆）
-    std::priority_queue<std::pair<long long, int>, 
-                        std::vector<std::pair<long long, int>>, 
+
+    std::priority_queue<std::pair<long long, int>,
+                        std::vector<std::pair<long long, int>>,
                         std::greater<std::pair<long long, int>>> pq;
 
     dist[src_id] = 0;
     pq.push({0, src_id});
+
+    // 记录“到目标IP”的最优代价和其前驱源节点
+    long long best_target_dist = std::numeric_limits<long long>::max();
+    int best_target_parent = -1;
 
     while (!pq.empty()) {
         auto [current_dist, current] = pq.top();
@@ -37,44 +39,30 @@ std::vector<int> PathFinder::findShortestPath(const std::string& src_ip, const s
         if (visited[current]) continue;
         visited[current] = true;
 
-        // 检查当前源IP是否直接连接到目标IP
         for (int edge_id = graph.getOffsets()[current]; edge_id < graph.getOffsets()[current + 1]; edge_id++) {
             int neighbor_dst_id = graph.getEdges()[edge_id];
-            
-            // 计算拥塞程度权重：流量/持续时间
             const EdgeInfo& edge_info = graph.getEdgeInfos()[edge_id];
+
             long long congestion_weight = 0;
             if (edge_info.total_duration > 0) {
-                congestion_weight = edge_info.total_data_size / edge_info.total_duration;
+                congestion_weight = static_cast<long long>(edge_info.total_data_size / edge_info.total_duration);
             } else {
-                congestion_weight = edge_info.total_data_size; // 如果持续时间为0，使用流量作为权重
+                congestion_weight = edge_info.total_data_size;
             }
-            
+
+            // 到目标IP的距离应该单独比较
             if (neighbor_dst_id == dst_id) {
-                // 找到能够直接到达目标IP的路径
-                if (current_dist + congestion_weight < dist[current]) {
-                    dist[current] = current_dist + congestion_weight;
-                    parent[current] = current; // 自环，表示直接连接
+                long long candidate = current_dist + congestion_weight;
+                if (candidate < best_target_dist) {
+                    best_target_dist = candidate;
+                    best_target_parent = current;
                 }
-                
-                // 构建路径：从源IP到当前源IP，然后到目标IP
-                int temp = current;
-                while (temp != -1) {
-                    path.push_back(temp);
-                    temp = parent[temp];
-                }
-                std::reverse(path.begin(), path.end());
-                
-                // 在路径末尾添加目标IP（使用目标IP索引系统的ID）
-                path.push_back(dst_id);
-                
-                return path;
             }
-            
-            // 将目标IP转换回源IP索引系统（如果存在）
+
+            // 继续在“可作为src出现的节点”上做Dijkstra扩展
             std::string neighbor_ip = graph.getDestIP(neighbor_dst_id);
             int neighbor_src_id = graph.getSrcVertexID(neighbor_ip);
-            
+
             if (neighbor_src_id != -1) {
                 long long new_dist = current_dist + congestion_weight;
                 if (new_dist < dist[neighbor_src_id]) {
@@ -86,10 +74,21 @@ std::vector<int> PathFinder::findShortestPath(const std::string& src_ip, const s
         }
     }
 
-    std::cerr << "未找到从 " << src_ip << " 到 " << dst_ip << " 的路径" << std::endl;
+    if (best_target_parent == -1) {
+        std::cerr << "未找到从 " << src_ip << " 到 " << dst_ip << " 的路径" << std::endl;
+        return path;
+    }
+
+    // 只返回src索引链路，终点dst_ip在main里单独打印，避免ID体系混用
+    int temp = best_target_parent;
+    while (temp != -1) {
+        path.push_back(temp);
+        temp = parent[temp];
+    }
+    std::reverse(path.begin(), path.end());
+
     return path;
 }
-
 
 std::vector<int> PathFinder::findShortestPathByHops(const std::string& src_ip, const std::string& dst_ip) {
     int src_id = graph.getSrcVertexID(src_ip);
@@ -101,47 +100,36 @@ std::vector<int> PathFinder::findShortestPathByHops(const std::string& src_ip, c
         return path;
     }
 
-    // BFS 实现最小跳数路径查找
     std::queue<int> q;
-    std::vector<int> parent(graph.getNumVertices(), -1); // 使用源IP索引系统的大小
-    std::vector<bool> visited(graph.getNumVertices(), false); // 使用源IP索引系统的大小
+    std::vector<int> parent(graph.getNumVertices(), -1);
+    std::vector<bool> visited(graph.getNumVertices(), false);
 
     q.push(src_id);
     visited[src_id] = true;
+
+    int best_target_parent = -1;
 
     while (!q.empty()) {
         int current = q.front();
         q.pop();
 
-        // 检查当前源IP是否直接连接到目标IP
+        // 先检查是否可直接到目标
         for (int edge_id = graph.getOffsets()[current]; edge_id < graph.getOffsets()[current + 1]; edge_id++) {
             int neighbor_dst_id = graph.getEdges()[edge_id];
             if (neighbor_dst_id == dst_id) {
-                // 找到能够直接到达目标IP的源IP
-                
-                // 构建路径：从源IP到当前源IP，然后到目标IP
-                int temp = current;
-                while (temp != -1) {
-                    path.push_back(temp);
-                    temp = parent[temp];
-                }
-                std::reverse(path.begin(), path.end());
-                
-                // 在路径末尾添加目标IP（使用目标IP索引系统的ID）
-                path.push_back(dst_id);
-                
-                return path;
+                best_target_parent = current;
+                break;
             }
         }
+        if (best_target_parent != -1) {
+            break;
+        }
 
-        // 继续搜索邻居
         for (int edge_id = graph.getOffsets()[current]; edge_id < graph.getOffsets()[current + 1]; edge_id++) {
             int neighbor_dst_id = graph.getEdges()[edge_id];
-            
-            // 将目标IP转换回源IP索引系统（如果存在）
             std::string neighbor_ip = graph.getDestIP(neighbor_dst_id);
             int neighbor_src_id = graph.getSrcVertexID(neighbor_ip);
-            
+
             if (neighbor_src_id != -1 && !visited[neighbor_src_id]) {
                 visited[neighbor_src_id] = true;
                 parent[neighbor_src_id] = current;
@@ -150,7 +138,18 @@ std::vector<int> PathFinder::findShortestPathByHops(const std::string& src_ip, c
         }
     }
 
-    std::cerr << "未找到从 " << src_ip << " 到 " << dst_ip << " 的路径" << std::endl;
+    if (best_target_parent == -1) {
+        std::cerr << "未找到从 " << src_ip << " 到 " << dst_ip << " 的路径" << std::endl;
+        return path;
+    }
+
+    int temp = best_target_parent;
+    while (temp != -1) {
+        path.push_back(temp);
+        temp = parent[temp];
+    }
+    std::reverse(path.begin(), path.end());
+
     return path;
 }
 void PathFinder::printPath(const std::vector<int>& path) {

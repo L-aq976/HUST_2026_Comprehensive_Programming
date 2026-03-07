@@ -2,7 +2,7 @@
 #include "../include/path_finder.h"
 #include "../include/safe.h"
 #include "../include/sort_filter.h"
-#include "../include/union_find_external.h"  // 添加这行
+#include "../include/union_find_external.h" 
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -126,12 +126,9 @@ int main(int argc, char* argv[]) {
                 if (!path.empty()) {
                     std::cout << "路径: ";
                     for (size_t i = 0; i < path.size(); i++) {
-                        std::cout << graph.getSrcIP(path[i]);
-                        if (i != path.size() - 1) {
-                            std::cout << " -> ";
-                        }
+                            std::cout << graph.getSrcIP(path[i]) << " -> ";
                     }
-                    std::cout << std::endl;
+                    std::cout << dst_ip << std::endl;
                 } else {
                     std::cout << "未找到路径" << std::endl;
                 }
@@ -299,6 +296,7 @@ int main(int argc, char* argv[]) {
                 std::cout << "  输出文件可选，默认: subgraph.json" << std::endl;
             }
         }
+        //生成脚本文件的简单命令，当只有cpp文件的时候可以进行尝试，本项目并没有使用
         else if (cmd == "GENERATE_VIZ_SCRIPT") {
             // 生成Python可视化脚本
             std::cout << "生成Python可视化脚本..." << std::endl;
