@@ -7,7 +7,7 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
-
+#include "../include/union_find_external.h"
 /**
  * @brief 支持命令行交互的网络分析程序
  */
