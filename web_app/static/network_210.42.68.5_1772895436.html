@@ -1,0 +1,163 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script src="lib/bindings/utils.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 750px;
+                 background-color: #ffffff;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#6baed6", "font": {"size": 12}, "id": 0, "label": "210.42.68.5", "shape": "dot", "size": 25, "title": "IP: 210.42.68.5\u003cbr\u003eType: source"}, {"color": "#6baed6", "font": {"size": 12}, "id": 132, "label": "175.27.43.196", "shape": "dot", "size": 25, "title": "IP: 175.27.43.196\u003cbr\u003eType: source"}, {"color": "#fd8d3c", "font": {"size": 12}, "id": 165, "label": "210.42.68.13", "shape": "dot", "size": 25, "title": "IP: 210.42.68.13\u003cbr\u003eType: both"}, {"color": "#6baed6", "font": {"size": 12}, "id": 309, "label": "58.205.220.24", "shape": "dot", "size": 25, "title": "IP: 58.205.220.24\u003cbr\u003eType: source"}, {"color": "#6baed6", "font": {"size": 12}, "id": 455, "label": "121.51.49.19", "shape": "dot", "size": 25, "title": "IP: 121.51.49.19\u003cbr\u003eType: source"}, {"color": "#6baed6", "font": {"size": 12}, "id": 666, "label": "115.156.142.241", "shape": "dot", "size": 25, "title": "IP: 115.156.142.241\u003cbr\u003eType: source"}, {"color": "#fd8d3c", "font": {"size": 12}, "id": 828, "label": "115.156.143.51", "shape": "dot", "size": 25, "title": "IP: 115.156.143.51\u003cbr\u003eType: both"}, {"color": "#fd8d3c", "font": {"size": 12}, "id": 849, "label": "115.156.142.30", "shape": "dot", "size": 25, "title": "IP: 115.156.142.30\u003cbr\u003eType: both"}, {"color": "#fd8d3c", "font": {"size": 12}, "id": 920, "label": "115.156.144.63", "shape": "dot", "size": 25, "title": "IP: 115.156.144.63\u003cbr\u003eType: both"}, {"color": "#6baed6", "font": {"size": 12}, "id": 923, "label": "115.156.142.130", "shape": "dot", "size": 25, "title": "IP: 115.156.142.130\u003cbr\u003eType: source"}, {"color": "#fd8d3c", "font": {"size": 12}, "id": 1305, "label": "115.156.144.200", "shape": "dot", "size": 25, "title": "IP: 115.156.144.200\u003cbr\u003eType: both"}, {"color": "#74c476", "font": {"size": 12}, "id": 1433, "label": "115.156.144.100", "shape": "dot", "size": 25, "title": "IP: 115.156.144.100\u003cbr\u003eType: destination"}, {"color": "#74c476", "font": {"size": 12}, "id": 1574, "label": "115.156.143.149", "shape": "dot", "size": 25, "title": "IP: 115.156.143.149\u003cbr\u003eType: destination"}, {"color": "#74c476", "font": {"size": 12}, "id": 1624, "label": "115.156.143.41", "shape": "dot", "size": 25, "title": "IP: 115.156.143.41\u003cbr\u003eType: destination"}, {"color": "#74c476", "font": {"size": 12}, "id": 1652, "label": "115.156.141.56", "shape": "dot", "size": 25, "title": "IP: 115.156.141.56\u003cbr\u003eType: destination"}, {"color": "#74c476", "font": {"size": 12}, "id": 1655, "label": "115.156.141.234", "shape": "dot", "size": 25, "title": "IP: 115.156.141.234\u003cbr\u003eType: destination"}, {"color": "#74c476", "font": {"size": 12}, "id": 1720, "label": "115.156.142.234", "shape": "dot", "size": 25, "title": "IP: 115.156.142.234\u003cbr\u003eType: destination"}, {"color": "#74c476", "font": {"size": 12}, "id": 1907, "label": "115.156.142.208", "shape": "dot", "size": 25, "title": "IP: 115.156.142.208\u003cbr\u003eType: destination"}, {"color": "#74c476", "font": {"size": 12}, "id": 1911, "label": "109.244.244.103", "shape": "dot", "size": 25, "title": "IP: 109.244.244.103\u003cbr\u003eType: destination"}, {"color": "#74c476", "font": {"size": 12}, "id": 1928, "label": "222.125.83.190", "shape": "dot", "size": 25, "title": "IP: 222.125.83.190\u003cbr\u003eType: destination"}, {"color": "#74c476", "font": {"size": 12}, "id": 1974, "label": "17.57.145.149", "shape": "dot", "size": 25, "title": "IP: 17.57.145.149\u003cbr\u003eType: destination"}, {"color": "#74c476", "font": {"size": 12}, "id": 2212, "label": "112.19.142.108", "shape": "dot", "size": 25, "title": "IP: 112.19.142.108\u003cbr\u003eType: destination"}]);
+                  edges = new vis.DataSet([{"arrows": "to", "from": 0, "title": "\u4ece: 210.42.68.5\u003cbr\u003e\u5230: 115.156.144.100\u003cbr\u003e\u6d41\u6570\u91cf: 1\u003cbr\u003e\u603b\u6570\u636e\u91cf: 195,574 bytes\u003cbr\u003e\u5e73\u5747\u65f6\u957f: 609.35s", "to": 1433, "width": 1.5}, {"arrows": "to", "from": 0, "title": "\u4ece: 210.42.68.5\u003cbr\u003e\u5230: 115.156.143.149\u003cbr\u003e\u6d41\u6570\u91cf: 1\u003cbr\u003e\u603b\u6570\u636e\u91cf: 175,596 bytes\u003cbr\u003e\u5e73\u5747\u65f6\u957f: 1438.21s", "to": 1574, "width": 1.5}, {"arrows": "to", "from": 0, "title": "\u4ece: 210.42.68.5\u003cbr\u003e\u5230: 115.156.141.56\u003cbr\u003e\u6d41\u6570\u91cf: 1\u003cbr\u003e\u603b\u6570\u636e\u91cf: 43,316 bytes\u003cbr\u003e\u5e73\u5747\u65f6\u957f: 4603.21s", "to": 1652, "width": 1.5}, {"arrows": "to", "from": 0, "title": "\u4ece: 210.42.68.5\u003cbr\u003e\u5230: 115.156.141.234\u003cbr\u003e\u6d41\u6570\u91cf: 1\u003cbr\u003e\u603b\u6570\u636e\u91cf: 15,098 bytes\u003cbr\u003e\u5e73\u5747\u65f6\u957f: 2.12s", "to": 1655, "width": 1.5}, {"arrows": "to", "from": 0, "title": "\u4ece: 210.42.68.5\u003cbr\u003e\u5230: 115.156.142.234\u003cbr\u003e\u6d41\u6570\u91cf: 1\u003cbr\u003e\u603b\u6570\u636e\u91cf: 12,750 bytes\u003cbr\u003e\u5e73\u5747\u65f6\u957f: 2.12s", "to": 1720, "width": 1.5}, {"arrows": "to", "from": 0, "title": "\u4ece: 210.42.68.5\u003cbr\u003e\u5230: 115.156.144.63\u003cbr\u003e\u6d41\u6570\u91cf: 1\u003cbr\u003e\u603b\u6570\u636e\u91cf: 19,313 bytes\u003cbr\u003e\u5e73\u5747\u65f6\u957f: 15.17s", "to": 920, "width": 1.5}, {"arrows": "to", "from": 0, "title": "\u4ece: 210.42.68.5\u003cbr\u003e\u5230: 115.156.142.30\u003cbr\u003e\u6d41\u6570\u91cf: 1\u003cbr\u003e\u603b\u6570\u636e\u91cf: 23,564 bytes\u003cbr\u003e\u5e73\u5747\u65f6\u957f: 6.19s", "to": 849, "width": 1.5}, {"arrows": "to", "from": 132, "title": "\u4ece: 175.27.43.196\u003cbr\u003e\u5230: 115.156.144.200\u003cbr\u003e\u6d41\u6570\u91cf: 1\u003cbr\u003e\u603b\u6570\u636e\u91cf: 6,960 bytes\u003cbr\u003e\u5e73\u5747\u65f6\u957f: 101.47s", "to": 1305, "width": 1.5}, {"arrows": "to", "from": 165, "title": "\u4ece: 210.42.68.13\u003cbr\u003e\u5230: 115.156.144.200\u003cbr\u003e\u6d41\u6570\u91cf: 1\u003cbr\u003e\u603b\u6570\u636e\u91cf: 37,290 bytes\u003cbr\u003e\u5e73\u5747\u65f6\u957f: 13.68s", "to": 1305, "width": 1.5}, {"arrows": "to", "from": 165, "title": "\u4ece: 210.42.68.13\u003cbr\u003e\u5230: 115.156.143.41\u003cbr\u003e\u6d41\u6570\u91cf: 1\u003cbr\u003e\u603b\u6570\u636e\u91cf: 1,393,523 bytes\u003cbr\u003e\u5e73\u5747\u65f6\u957f: 455.49s", "to": 1624, "width": 1.5}, {"arrows": "to", "from": 165, "title": "\u4ece: 210.42.68.13\u003cbr\u003e\u5230: 115.156.141.56\u003cbr\u003e\u6d41\u6570\u91cf: 1\u003cbr\u003e\u603b\u6570\u636e\u91cf: 239,551 bytes\u003cbr\u003e\u5e73\u5747\u65f6\u957f: 4676.41s", "to": 1652, "width": 1.5}, {"arrows": "to", "from": 165, "title": "\u4ece: 210.42.68.13\u003cbr\u003e\u5230: 115.156.142.208\u003cbr\u003e\u6d41\u6570\u91cf: 1\u003cbr\u003e\u603b\u6570\u636e\u91cf: 842,271 bytes\u003cbr\u003e\u5e73\u5747\u65f6\u957f: 2110.64s", "to": 1907, "width": 1.5}, {"arrows": "to", "from": 309, "title": "\u4ece: 58.205.220.24\u003cbr\u003e\u5230: 115.156.143.41\u003cbr\u003e\u6d41\u6570\u91cf: 1\u003cbr\u003e\u603b\u6570\u636e\u91cf: 1,530 bytes\u003cbr\u003e\u5e73\u5747\u65f6\u957f: 3.87s", "to": 1624, "width": 1.5}, {"arrows": "to", "from": 455, "title": "\u4ece: 121.51.49.19\u003cbr\u003e\u5230: 115.156.141.234\u003cbr\u003e\u6d41\u6570\u91cf: 1\u003cbr\u003e\u603b\u6570\u636e\u91cf: 18,751 bytes\u003cbr\u003e\u5e73\u5747\u65f6\u957f: 529.26s", "to": 1655, "width": 1.5}, {"arrows": "to", "from": 455, "title": "\u4ece: 121.51.49.19\u003cbr\u003e\u5230: 115.156.143.51\u003cbr\u003e\u6d41\u6570\u91cf: 1\u003cbr\u003e\u603b\u6570\u636e\u91cf: 3,678 bytes\u003cbr\u003e\u5e73\u5747\u65f6\u957f: 29.94s", "to": 828, "width": 1.5}, {"arrows": "to", "from": 666, "title": "\u4ece: 115.156.142.241\u003cbr\u003e\u5230: 210.42.68.13\u003cbr\u003e\u6d41\u6570\u91cf: 1\u003cbr\u003e\u603b\u6570\u636e\u91cf: 4,618 bytes\u003cbr\u003e\u5e73\u5747\u65f6\u957f: 4120.67s", "to": 165, "width": 1.5}, {"arrows": "to", "from": 828, "title": "\u4ece: 115.156.143.51\u003cbr\u003e\u5230: 109.244.244.103\u003cbr\u003e\u6d41\u6570\u91cf: 1\u003cbr\u003e\u603b\u6570\u636e\u91cf: 4,398 bytes\u003cbr\u003e\u5e73\u5747\u65f6\u957f: 9701.18s", "to": 1911, "width": 1.5}, {"arrows": "to", "from": 849, "title": "\u4ece: 115.156.142.30\u003cbr\u003e\u5230: 222.125.83.190\u003cbr\u003e\u6d41\u6570\u91cf: 1\u003cbr\u003e\u603b\u6570\u636e\u91cf: 1,402 bytes\u003cbr\u003e\u5e73\u5747\u65f6\u957f: 5584.15s", "to": 1928, "width": 1.5}, {"arrows": "to", "from": 920, "title": "\u4ece: 115.156.144.63\u003cbr\u003e\u5230: 17.57.145.149\u003cbr\u003e\u6d41\u6570\u91cf: 1\u003cbr\u003e\u603b\u6570\u636e\u91cf: 3,270 bytes\u003cbr\u003e\u5e73\u5747\u65f6\u957f: 635.73s", "to": 1974, "width": 1.5}, {"arrows": "to", "from": 923, "title": "\u4ece: 115.156.142.130\u003cbr\u003e\u5230: 109.244.244.103\u003cbr\u003e\u6d41\u6570\u91cf: 1\u003cbr\u003e\u603b\u6570\u636e\u91cf: 2,398 bytes\u003cbr\u003e\u5e73\u5747\u65f6\u957f: 8621.57s", "to": 1911, "width": 1.5}, {"arrows": "to", "from": 1305, "title": "\u4ece: 115.156.144.200\u003cbr\u003e\u5230: 112.19.142.108\u003cbr\u003e\u6d41\u6570\u91cf: 1\u003cbr\u003e\u603b\u6570\u636e\u91cf: 1,283 bytes\u003cbr\u003e\u5e73\u5747\u65f6\u957f: 175.50s", "to": 2212, "width": 1.5}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "barnesHut": {
+            "avoidOverlap": 1,
+            "centralGravity": 0.3,
+            "damping": 0.09,
+            "gravitationalConstant": -80000,
+            "springConstant": 0.001,
+            "springLength": 250
+        },
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>
