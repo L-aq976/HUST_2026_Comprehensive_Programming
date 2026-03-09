@@ -584,4 +584,7 @@ if __name__ == '__main__':
     print("3. 生成可视化")
     print("\n或直接上传JSON子图文件")
     
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    debug_mode = os.getenv('FLASK_DEBUG', '0').lower() in ('1', 'true', 'yes', 'on')
+    host = os.getenv('APP_HOST', '0.0.0.0')
+    port = int(os.getenv('VISUALIZE_APP_PORT', '5001'))
+    app.run(debug=debug_mode, host=host, port=port)

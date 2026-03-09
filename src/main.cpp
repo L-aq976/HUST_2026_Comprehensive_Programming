@@ -122,15 +122,25 @@ int main(int argc, char* argv[]) {
             if (iss >> src_ip >> dst_ip) {
                 std::cout << "查找基于拥塞程度的最短路径: " << src_ip << " -> " << dst_ip << std::endl;
                 
-                std::vector<int> path = pathFinder.findShortestPath(src_ip, dst_ip);
-                if (!path.empty()) {
+                std::vector<int> congestion_path = pathFinder.findShortestPath(src_ip, dst_ip);
+                std::vector<int> hop_path = pathFinder.findShortestPathByHops(src_ip, dst_ip);
+
+                if (!congestion_path.empty()) {
                     std::cout << "路径: ";
-                    for (size_t i = 0; i < path.size(); i++) {
-                            std::cout << graph.getSrcIP(path[i]) << " -> ";
+                    for (size_t i = 0; i < congestion_path.size(); i++) {
+                            std::cout << graph.getSrcIP(congestion_path[i]) << " -> ";
                     }
                     std::cout << dst_ip << std::endl;
                 } else {
                     std::cout << "未找到路径" << std::endl;
+                }
+
+                if (congestion_path.empty() || hop_path.empty()) {
+                    std::cout << "路径差异: 无法比较（其中一种算法未找到路径）" << std::endl;
+                } else if (congestion_path == hop_path) {
+                    std::cout << "路径差异: 与跳数最短路径相同" << std::endl;
+                } else {
+                    std::cout << "路径差异: 与跳数最短路径不同" << std::endl;
                 }
                 std::cout << "PATH_FINDING_COMPLETE" << std::endl;
             } else {
@@ -144,18 +154,25 @@ int main(int argc, char* argv[]) {
             if (iss >> src_ip >> dst_ip) {
                 std::cout << "查找基于跳数的最短路径: " << src_ip << " -> " << dst_ip << std::endl;
                 
-                std::vector<int> path = pathFinder.findShortestPathByHops(src_ip, dst_ip);
-                if (!path.empty()) {
+                std::vector<int> hop_path = pathFinder.findShortestPathByHops(src_ip, dst_ip);
+                std::vector<int> congestion_path = pathFinder.findShortestPath(src_ip, dst_ip);
+
+                if (!hop_path.empty()) {
                     std::cout << "路径: ";
-                    for (size_t i = 0; i < path.size(); i++) {
-                        std::cout << graph.getSrcIP(path[i]);
-                        if (i != path.size() - 1) {
-                            std::cout << " -> ";
-                        }
+                    for (size_t i = 0; i < hop_path.size(); i++) {
+                        std::cout << graph.getSrcIP(hop_path[i]) << " -> ";
                     }
-                    std::cout << std::endl;
+                    std::cout << dst_ip << std::endl;
                 } else {
                     std::cout << "未找到路径" << std::endl;
+                }
+
+                if (hop_path.empty() || congestion_path.empty()) {
+                    std::cout << "路径差异: 无法比较（其中一种算法未找到路径）" << std::endl;
+                } else if (hop_path == congestion_path) {
+                    std::cout << "路径差异: 与拥塞最短路径相同" << std::endl;
+                } else {
+                    std::cout << "路径差异: 与拥塞最短路径不同" << std::endl;
                 }
                 std::cout << "PATH_FINDING_BY_HOPS_COMPLETE" << std::endl;
             } else {
@@ -178,6 +195,7 @@ int main(int argc, char* argv[]) {
         else if (cmd == "TRAFFIC_STATISTICS") {
             // 流量统计分析
             std::cout << "开始流量统计分析..." << std::endl;
+            sortFilter.sortVerticesByTraffic(graph);
             
             // 计算总流量
             long long total_data = 0;
@@ -190,6 +208,8 @@ int main(int argc, char* argv[]) {
             std::cout << "总数据量: " << total_data << " bytes" << std::endl;
             std::cout << "总流数: " << total_flows << std::endl;
             std::cout << "平均每流数据量: " << (total_flows > 0 ? total_data / total_flows : 0) << " bytes" << std::endl;
+            std::cout << "流量前10节点:" << std::endl;
+            sortFilter.printTopNVertices(sortFilter.traffic_total, 10);
             
             std::cout << "TRAFFIC_STATS_COMPLETE" << std::endl;
         }

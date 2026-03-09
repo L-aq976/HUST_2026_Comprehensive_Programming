@@ -147,7 +147,7 @@ bool CSRGraph::buildFromCSV(const std::string& filename) {
                          return a.first < b.first;
                      });
             
-            // 合并相同目标并计数
+            // 计数唯一邻居数量，以便于合并相同目标的边
             int unique_count = 0;
             for (size_t i = 0; i < adjacency[src_id].size(); i++) {
                 if (i == 0 || adjacency[src_id][i].first != adjacency[src_id][i-1].first) {

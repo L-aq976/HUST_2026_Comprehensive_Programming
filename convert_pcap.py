@@ -89,53 +89,87 @@ def extract_packet_info(packet):
     except Exception:
         return None
 
+def get_bidirectional_session_key(packet_info):
+    """构造双向会话键，使A->B与B->A归并为同一条会话"""
+    endpoint_a = (packet_info['Source'], packet_info['SrcPort'])
+    endpoint_b = (packet_info['Destination'], packet_info['DstPort'])
+
+    if endpoint_a <= endpoint_b:
+        src_ep, dst_ep = endpoint_a, endpoint_b
+    else:
+        src_ep, dst_ep = endpoint_b, endpoint_a
+
+    return (
+        src_ep[0],
+        dst_ep[0],
+        packet_info['Protocol'],
+        src_ep[1],
+        dst_ep[1]
+    )
+
 def process_pcap_file(pcap_file_path, csv_file_path):
     """处理单个pcap文件并转换为CSV"""
     print(f"正在处理: {pcap_file_path}")
-    
-    packets_info = []
-    timestamps = []
+
+    # 按双向会话聚合并计算会话持续时间
+    flows = {}
     
     try:
         # 使用scapy读取pcap文件
         packets = rdpcap(pcap_file_path)
-        
+
         for packet in packets:
             packet_info = extract_packet_info(packet)
             if packet_info:
-                packets_info.append(packet_info)
-                timestamps.append(packet_info['Timestamp'])
-        
-        if not packets_info:
+                flow_key = get_bidirectional_session_key(packet_info)
+
+                if flow_key not in flows:
+                    flows[flow_key] = {
+                        # 使用标准化端点顺序输出，避免同一会话方向不一致
+                        'source': flow_key[0],
+                        'destination': flow_key[1],
+                        'protocol': flow_key[2],
+                        'src_port': flow_key[3],
+                        'dst_port': flow_key[4],
+                        'total_data_size': 0,
+                        'first_timestamp': packet_info['Timestamp'],
+                        'last_timestamp': packet_info['Timestamp'],
+                        'packet_count': 0,
+                    }
+
+                flow = flows[flow_key]
+                flow['total_data_size'] += packet_info['DataSize']
+                flow['packet_count'] += 1
+                if packet_info['Timestamp'] < flow['first_timestamp']:
+                    flow['first_timestamp'] = packet_info['Timestamp']
+                if packet_info['Timestamp'] > flow['last_timestamp']:
+                    flow['last_timestamp'] = packet_info['Timestamp']
+
+        if not flows:
             print(f"警告: {pcap_file_path} 中没有找到有效的IP包")
             return False
-        
-        # 计算持续时间（基于第一个和最后一个包的时间戳）
-        if len(timestamps) > 1:
-            duration = max(timestamps) - min(timestamps)
-        else:
-            duration = 0
-        
+
         # 写入CSV文件
         with open(csv_file_path, 'w', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(get_csv_header())
-            
-            for packet_info in packets_info:
-                # 为每个包设置相同的持续时间（基于整个会话）
+
+            for flow in flows.values():
+                duration = flow['last_timestamp'] - flow['first_timestamp']
                 row = [
-                    packet_info['Source'],
-                    packet_info['Destination'],
-                    packet_info['Protocol'],
-                    packet_info['SrcPort'],
-                    packet_info['DstPort'],
-                    packet_info['DataSize'],
-                    f"{duration:.3f}"  # 保留3位小数
+                    flow['source'],
+                    flow['destination'],
+                    flow['protocol'],
+                    flow['src_port'],
+                    flow['dst_port'],
+                    flow['total_data_size'],
+                    f"{duration:.3f}"  # 每条流的持续时间
                 ]
                 writer.writerow(row)
-        
+
+        total_packets = sum(item['packet_count'] for item in flows.values())
         print(f"成功转换: {pcap_file_path} -> {csv_file_path}")
-        print(f"转换了 {len(packets_info)} 个数据包")
+        print(f"转换了 {total_packets} 个数据包，聚合为 {len(flows)} 条流")
         return True
         
     except Exception as e:
